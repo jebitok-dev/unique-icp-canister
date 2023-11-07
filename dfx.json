@@ -1,0 +1,13 @@
+{
+  "canisters": {
+    "review_board": {
+      "main": "src/index.tsx",
+      "type": "custom",
+      "build": "npx azle review_board",
+      "root": "src",
+      "ts": "src/index.tsx",
+      "candid": "src/index.did",
+      "wasm": ".azle/review_board/review_board.wasm.gz"
+    }
+  }
+}

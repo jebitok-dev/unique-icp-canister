@@ -1,0 +1,17 @@
+{
+  "name": "review_board",
+  "version": "0.1.0",
+  "description": "Internet Computer review board application",
+  "dependencies": {
+    "@dfinity/agent": "^0.15.6",
+    "@dfinity/candid": "^0.15.6",
+    "azle": "0.16.2",
+    "uuid": "^9.0.0"
+  },
+  "engines": {
+    "node": "^12 || ^14 || ^16 || ^18"
+  },
+  "devDependencies": {
+    "@types/uuid": "^9.0.6"
+  }
+}
