@@ -33,20 +33,60 @@ export function getReview(id: string): Result<Review, string> {
 
 $update;
 export function addReview(payload: ReviewPayload): Result<Review, string> {
-    const review: Review = { id: uuidv4(), createdAt: ic.time(), updatedAt: Opt.None, ...payload };
-    reviewStorage.insert(review.id, review);
-    return Result.Ok(review);
+    // Payload Validation: Ensure that body, rating, and websiteURL are present in the payload.
+    if (!payload.body || typeof payload.rating !== 'number' || !payload.websiteURL) {
+        return Result.Err("Missing or invalid fields in the payload.");
+    }
+
+    // Create a new review record
+    const review: Review = {
+        id: uuidv4(),
+        createdAt: ic.time(),
+        updatedAt: Opt.None,
+        body: payload.body, // Explicit Property Setting
+        rating: payload.rating, // Explicit Property Setting
+        websiteURL: payload.websiteURL, // Explicit Property Setting
+    };
+
+    try {
+        reviewStorage.insert(review.id, review); // Error Handling: Handle any errors during insertion
+    } catch (error) {
+        return Result.Err(`Failed to create the review: ${error}`);
+    }
+
+    return Result.Ok<Review, string>(review);
 }
 
 $update;
 export function updateReview(id: string, payload: ReviewPayload): Result<Review, string> {
+    // Parameter Validation: Ensure that the id is a valid UUID
+    if (!id) {
+        return Result.Err<Review, string>(`Invalid UUID: ${id}`);
+    }
+
+    // Payload Validation: Ensure that body, rating, and websiteURL are present in the payload.
+    if (!payload.body || typeof payload.rating !== 'number' || !payload.websiteURL) {
+        return Result.Err("Missing or invalid fields in the payload.");
+    }
+
     return match(reviewStorage.get(id), {
         Some: (review) => {
-            const updatedReview: Review = {...review, ...payload, updatedAt: Opt.Some(ic.time())};
-            reviewStorage.insert(review.id, updatedReview);
+            
+            const updatedReview: Review = {
+                ...review,
+                ...payload,
+                updatedAt: Opt.Some(ic.time()),
+            };
+
+            try {
+                reviewStorage.insert(updatedReview.id, updatedReview); // Error Handling: Handle any errors during insertion
+            } catch (error) {
+                return Result.Err<Review, string>(`Failed to update the review: ${error}`);
+            }
+
             return Result.Ok<Review, string>(updatedReview);
         },
-        None: () => Result.Err<Review, string>(`couldn't update a review with id=${id}. review not found`)
+        None: () => Result.Err<Review, string>(`Couldn't update a review with id=${id}. Review not found`),
     });
 }
 
