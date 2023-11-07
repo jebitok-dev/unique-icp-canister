@@ -18,36 +18,45 @@ type ReviewPayload = Record<{
 
 const reviewStorage = new StableBTreeMap<string, Review>(0, 44, 1024);
 
-$query;
+// Get a list of all reviews
+$query
 export function getReviews(): Result<Vec<Review>, string> {
     return Result.Ok(reviewStorage.values());
 }
 
-$query;
+// Get a specific review by ID
+$query
 export function getReview(id: string): Result<Review, string> {
-    return match(reviewStorage.get(id), {
-        Some: (review) => Result.Ok<Review, string>(review),
-        None: () => Result.Err<Review, string>(`a review with id=${id} not found`)
-    });
+    const review = reviewStorage.get(id);
+    if (review !== null) {
+        return Result.Ok(review);
+    } else {
+        return Result.Err(`A review with id=${id} not found`);
+    }
 }
 
-$update;
+// Add a new review
+$update
 export function addReview(payload: ReviewPayload): Result<Review, string> {
-    const review: Review = { id: uuidv4(), createdAt: ic.time(), updatedAt: Opt.None, ...payload };
-    reviewStorage.insert(review.id, review);
+    const id = uuidv4();
+    const createdAt = ic.time();
+    const review: Review = { id, createdAt, updatedAt: Opt.None, ...payload };
+    reviewStorage.insert(id, review);
     return Result.Ok(review);
 }
 
-$update;
+// Update an existing review by ID
+$update
 export function updateReview(id: string, payload: ReviewPayload): Result<Review, string> {
-    return match(reviewStorage.get(id), {
-        Some: (review) => {
-            const updatedReview: Review = {...review, ...payload, updatedAt: Opt.Some(ic.time())};
-            reviewStorage.insert(review.id, updatedReview);
-            return Result.Ok<Review, string>(updatedReview);
-        },
-        None: () => Result.Err<Review, string>(`couldn't update a review with id=${id}. review not found`)
-    });
+    const existingReview = reviewStorage.get(id);
+    if (existingReview !== null) {
+        const updatedAt = Opt.Some(ic.time());
+        const updatedReview: Review = { ...existingReview, ...payload, updatedAt };
+        reviewStorage.insert(id, updatedReview);
+        return Result.Ok(updatedReview);
+    } else {
+        return Result.Err(`Couldn't update a review with id=${id}. Review not found`);
+    }
 }
 
 // New Functions:
@@ -141,14 +150,11 @@ export function clearAllReviews(): Result<void, string> {
 
 // Workaround for making uuid package work with Azle
 globalThis.crypto = {
-     // @ts-ignore
     getRandomValues: () => {
-        let array = new Uint8Array(32);
-
+        const array = new Uint8Array(32);
         for (let i = 0; i < array.length; i++) {
             array[i] = Math.floor(Math.random() * 256);
         }
-
         return array;
     }
 };
